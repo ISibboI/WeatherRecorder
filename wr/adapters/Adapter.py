@@ -1,4 +1,5 @@
 from abc import abstractmethod
+from wr.db_model import WeatherData, db
 
 
 class Adapter:
@@ -9,9 +10,17 @@ class Adapter:
     def _receive_data_(self):
         """
         Receives current weather data.
-        :returns A list of tuples (timestamp in seconds, temperature, humidity, air pressure)
+        :returns A list of WeatherData objects.
         """
         pass
+
+    @abstractmethod
+    def _save_data_(self, data):
+        """
+        Saves the given data to the db.
+        :param data: A list of WeatherData objects.
+        :return: None
+        """
 
     def receive_data(self):
         data = self._receive_data_()
@@ -25,5 +34,7 @@ class Adapter:
 
             if point.pressure > 1100 or point.pressure < 900:
                 raise RuntimeError('Pressure out of range: ' + str(point.pressure))
+
+        self._save_data_(data)
 
         return data
