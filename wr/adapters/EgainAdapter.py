@@ -19,6 +19,9 @@ class EgainAdapter(Adapter):
         super().__init__(name)
 
     def _receive_data_(self):
+        if type(private.egain_guid) is not str or len(private.egain_guid) == 0:
+            raise RuntimeError('GUID for egain.se was not set!')
+
         post_data = {'guid': private.egain_guid}
         post_data = urllib.parse.urlencode(post_data).encode('ascii')
 
