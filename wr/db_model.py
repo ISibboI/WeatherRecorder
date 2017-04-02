@@ -5,9 +5,9 @@ db = pw.SqliteDatabase('weather.sqlite')
 
 class WeatherData(pw.Model):
     timestamp = pw.IntegerField(primary_key=True)
-    temperature = pw.FloatField()
-    humidity = pw.FloatField()
-    pressure = pw.FloatField()
+    temperature = pw.FloatField(null=True)
+    humidity = pw.FloatField(null=True)
+    pressure = pw.FloatField(null=True)
 
     class Meta:
         database = db
@@ -25,5 +25,9 @@ class FMIWeatherData(WeatherData):
     source = pw.FixedCharField(max_length=4, default='FMI')
 
 
+class EgainWeatherData(WeatherData):
+    source = pw.FixedCharField(max_length=4, default='EGSE')
+
+
 db.connect()
-db.create_tables([DWDWeatherData, RDMWeatherData, FMIWeatherData], safe=True)
+db.create_tables([DWDWeatherData, RDMWeatherData, FMIWeatherData, EgainWeatherData], safe=True)
