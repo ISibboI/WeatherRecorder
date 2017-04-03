@@ -13,7 +13,8 @@ class EgainAdapter(Adapter):
     Adapter that reads weather data from the egain.se webservice
     """
 
-    url = "http://install.egain.se/Home/CheckInstalled"
+    url_current = "http://install.egain.se/Home/CheckInstalled"
+    url_history = "http://install.egain.se/Home/ListSensorValues"
 
     def __init__(self, name):
         super().__init__(name)
@@ -25,7 +26,7 @@ class EgainAdapter(Adapter):
         post_data = {'guid': private.egain_guid}
         post_data = urllib.parse.urlencode(post_data).encode('ascii')
 
-        rawjson = str(urllib.request.urlopen(self.url, post_data).read().decode('utf-8')).strip()
+        rawjson = str(urllib.request.urlopen(self.url_current, post_data).read().decode('utf-8')).strip()
         jdata = json.loads(rawjson)
         timezone = pytz.timezone('Europe/Stockholm')
 
@@ -38,7 +39,26 @@ class EgainAdapter(Adapter):
         point.temperature = float(sensor_info['Temp'])
         point.humidity = float(sensor_info['Humidity'])
 
-        return [point]
+        points = [point]
+
+        post_data = {'guid': private.egain_guid, 'daysAgo': 3}
+        post_data = urllib.parse.urlencode(post_data).encode('ascii')
+
+        rawjson = str(urllib.request.urlopen(self.url_history, post_data).read().decode('utf-8')).strip()
+        jdata = json.loads(rawjson)
+
+        for json_point in jdata:
+            point = WeatherData()
+
+            dt = datetime.strptime(json_point['Date'], '%Y-%m-%d %H:%M')
+            dt = timezone.localize(dt)
+            point.timestamp = int(dt.timestamp())
+            point.temperature = float(json_point['Temp'])
+            point.humidity = float(json_point['Hum'])
+
+            points.append(point)
+
+        return points
 
     def _save_data_(self, data):
         try:
