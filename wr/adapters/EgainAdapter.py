@@ -28,37 +28,43 @@ class EgainAdapter(Adapter):
 
         rawjson = str(urllib.request.urlopen(self.url_current, post_data).read().decode('utf-8')).strip()
         jdata = json.loads(rawjson)
-        timezone = pytz.timezone('Europe/Stockholm')
 
-        point = WeatherData()
-        sensor_info = jdata['SensorInfo']
+        try:
+            timezone = pytz.timezone('Europe/Stockholm')
 
-        dt = datetime.strptime(sensor_info['Date'], '%Y-%m-%d %H:%M')
-        dt = timezone.localize(dt)
-        point.timestamp = int(dt.timestamp())
-        point.temperature = float(sensor_info['Temp'])
-        point.humidity = float(sensor_info['Humidity'])
-
-        points = [point]
-
-        post_data = {'guid': private.egain_guid, 'daysAgo': 3}
-        post_data = urllib.parse.urlencode(post_data).encode('ascii')
-
-        rawjson = str(urllib.request.urlopen(self.url_history, post_data).read().decode('utf-8')).strip()
-        jdata = json.loads(rawjson)
-
-        for json_point in jdata:
             point = WeatherData()
+            sensor_info = jdata['SensorInfo']
 
-            dt = datetime.strptime(json_point['Date'], '%Y-%m-%d %H:%M')
+            dt = datetime.strptime(sensor_info['Date'], '%Y-%m-%d %H:%M')
             dt = timezone.localize(dt)
             point.timestamp = int(dt.timestamp())
-            point.temperature = float(json_point['Temp'])
-            point.humidity = float(json_point['Hum'])
+            point.temperature = float(sensor_info['Temp'])
+            point.humidity = float(sensor_info['Humidity'])
 
-            points.append(point)
+            points = [point]
 
-        return points
+            post_data = {'guid': private.egain_guid, 'daysAgo': 3}
+            post_data = urllib.parse.urlencode(post_data).encode('ascii')
+
+            rawjson = str(urllib.request.urlopen(self.url_history, post_data).read().decode('utf-8')).strip()
+            jdata = json.loads(rawjson)
+
+            for json_point in jdata:
+                point = WeatherData()
+
+                dt = datetime.strptime(json_point['Date'], '%Y-%m-%d %H:%M')
+                dt = timezone.localize(dt)
+                point.timestamp = int(dt.timestamp())
+                point.temperature = float(json_point['Temp'])
+                point.humidity = float(json_point['Hum'])
+
+                points.append(point)
+
+            return points
+        except RuntimeError:
+            print("Error during parsing egain data!")
+            print(jdata)
+            return []
 
     def _save_data_(self, data):
         try:
